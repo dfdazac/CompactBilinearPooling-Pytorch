@@ -1,9 +1,9 @@
 import numpy as np
 import torch
 from torch import nn
-from torch.autograd import Variable
+#from torch.autograd import Variable
 
-import pytorch_fft.fft.autograd as afft
+#import pytorch_fft.fft.autograd as afft
 
 
 class CompactBilinearPooling(nn.Module):
@@ -54,7 +54,7 @@ class CompactBilinearPooling(nn.Module):
             rand_s_1 = 2 * torch.randint(2, size=(self.input_dim1,)) - 1
 
         self.sparse_sketch_matrix1 = self.generate_sketch_matrix(
-            rand_h_1, rand_s_1, self.output_dim))
+            rand_h_1, rand_s_1, self.output_dim)
 
         if rand_h_2 is None:
             torch.random.manual_seed(5)
@@ -64,7 +64,7 @@ class CompactBilinearPooling(nn.Module):
             rand_s_2 = 2 * torch.randint(2, size=(self.input_dim2,)) - 1
 
         self.sparse_sketch_matrix2 = self.generate_sketch_matrix(
-            rand_h_2, rand_s_2, self.output_dim))
+            rand_h_2, rand_s_2, self.output_dim)
 
         self.sparse_sketch_matrix1 = self.sparse_sketch_matrix1.to(self.device)
         self.sparse_sketch_matrix2 = self.sparse_sketch_matrix2.to(self.device)
@@ -107,26 +107,25 @@ class CompactBilinearPooling(nn.Module):
         Return a sparse matrix used for tensor sketch operation in compact bilinear
         pooling
         Args:
-            rand_h: an 1D numpy array containing indices in interval `[0, output_dim)`.
-            rand_s: an 1D numpy array of 1 and -1, having the same shape as `rand_h`.
+            rand_h: an 1D tensor containing indices in interval `[0, output_dim)`.
+            rand_s: an 1D tensor array of 1 and -1, having the same shape as `rand_h`.
             output_dim: the output dimensions of compact bilinear pooling.
         Returns:
             a sparse matrix of shape [input_dim, output_dim] for tensor sketch.
         """
 
         # Generate a sparse matrix for tensor count sketch
-        rand_h = rand_h.astype(np.int64)
-        rand_s = rand_s.astype(np.float32)
-        assert(rand_h.ndim == 1 and rand_s.ndim == 1 and len(rand_h) == len(rand_s))
-        assert(np.all(rand_h >= 0) and np.all(rand_h < output_dim))
+        rand_h = rand_h.long()
+        rand_s = rand_s.float()
+        assert(rand_h.dim() == 1 and rand_s.dim() == 1 and len(rand_h) == len(rand_s))
+        assert((rand_h >= 0).all() and (rand_h < output_dim).all())
 
         input_dim = len(rand_h)
-        indices = np.concatenate((np.arange(input_dim)[..., np.newaxis],
-                                  rand_h[..., np.newaxis]), axis=1)
-        indices = torch.from_numpy(indices)
-        rand_s = torch.from_numpy(rand_s)
+        indices = torch.stack((torch.arange(input_dim, dtype=torch.long), rand_h))
+
         sparse_sketch_matrix = torch.sparse.FloatTensor(
-            indices.t(), rand_s, torch.Size([input_dim, output_dim]))
+            indices, rand_s, torch.Size([input_dim, output_dim]))
+
         return sparse_sketch_matrix.to_dense()
 
 
@@ -140,4 +139,4 @@ if __name__ == '__main__':
 
     layer.train()
 
-    out = layer(bottom1, bottom2)
+    #out = layer(bottom1, bottom2)
