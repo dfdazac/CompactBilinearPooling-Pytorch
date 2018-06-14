@@ -44,30 +44,30 @@ class CompactBilinearPooling(nn.Module):
         self.input_dim2 = input_dim2
         self.output_dim = output_dim
         self.sum_pool = sum_pool
+        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
         if rand_h_1 is None:
-            np.random.seed(1)
-            rand_h_1 = np.random.randint(output_dim, size=self.input_dim1)
+            torch.random.manual_seed(1)
+            rand_h_1 = torch.randint(output_dim, size=(self.input_dim1,))
         if rand_s_1 is None:
-            np.random.seed(3)
-            rand_s_1 = 2 * np.random.randint(2, size=self.input_dim1) - 1
+            torch.random.manual_seed(3)
+            rand_s_1 = 2 * torch.randint(2, size=(self.input_dim1,)) - 1
 
-        self.sparse_sketch_matrix1 = Variable(self.generate_sketch_matrix(
+        self.sparse_sketch_matrix1 = self.generate_sketch_matrix(
             rand_h_1, rand_s_1, self.output_dim))
 
         if rand_h_2 is None:
-            np.random.seed(5)
-            rand_h_2 = np.random.randint(output_dim, size=self.input_dim2)
+            torch.random.manual_seed(5)
+            rand_h_2 = torch.randint(output_dim, size=(self.input_dim2,))
         if rand_s_2 is None:
-            np.random.seed(7)
-            rand_s_2 = 2 * np.random.randint(2, size=self.input_dim2) - 1
+            torch.random.manual_seed(7)
+            rand_s_2 = 2 * torch.randint(2, size=(self.input_dim2,)) - 1
 
-        self.sparse_sketch_matrix2 = Variable(self.generate_sketch_matrix(
+        self.sparse_sketch_matrix2 = self.generate_sketch_matrix(
             rand_h_2, rand_s_2, self.output_dim))
 
-        if cuda:
-            self.sparse_sketch_matrix1 = self.sparse_sketch_matrix1.cuda()
-            self.sparse_sketch_matrix2 = self.sparse_sketch_matrix2.cuda()
+        self.sparse_sketch_matrix1 = self.sparse_sketch_matrix1.to(self.device)
+        self.sparse_sketch_matrix2 = self.sparse_sketch_matrix2.to(self.device)
 
     def forward(self, bottom1, bottom2):
         """
@@ -132,7 +132,7 @@ class CompactBilinearPooling(nn.Module):
 
 if __name__ == '__main__':
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    
+
     bottom1 = torch.randn(128, 512, 14, 14).to(device)
     bottom2 = torch.randn(128, 512, 14, 14).to(device)
 
