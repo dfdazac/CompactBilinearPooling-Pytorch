@@ -117,8 +117,7 @@ class CompactBilinearPooling(nn.Module):
         # Generate a sparse matrix for tensor count sketch
         rand_h = rand_h.astype(np.int64)
         rand_s = rand_s.astype(np.float32)
-        assert(rand_h.ndim == 1 and rand_s.ndim ==
-               1 and len(rand_h) == len(rand_s))
+        assert(rand_h.ndim == 1 and rand_s.ndim == 1 and len(rand_h) == len(rand_s))
         assert(np.all(rand_h >= 0) and np.all(rand_h < output_dim))
 
         input_dim = len(rand_h)
@@ -132,12 +131,13 @@ class CompactBilinearPooling(nn.Module):
 
 
 if __name__ == '__main__':
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    
+    bottom1 = torch.randn(128, 512, 14, 14).to(device)
+    bottom2 = torch.randn(128, 512, 14, 14).to(device)
 
-    bottom1 = Variable(torch.randn(128, 512, 14, 14)).cuda()
-    bottom2 = Variable(torch.randn(128, 512, 14, 14)).cuda()
+    layer = CompactBilinearPooling(512, 512, 8000).to(device)
 
-    layer = CompactBilinearPooling(512, 512, 8000)
-    layer.cuda()
     layer.train()
 
     out = layer(bottom1, bottom2)
