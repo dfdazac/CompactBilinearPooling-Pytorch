@@ -1,9 +1,6 @@
 import numpy as np
 import torch
 from torch import nn
-#from torch.autograd import Variable
-
-#import pytorch_fft.fft.autograd as afft
 
 
 class CompactBilinearPooling(nn.Module):
@@ -94,17 +91,19 @@ class CompactBilinearPooling(nn.Module):
         fft1 = torch.fft(sketch_1, signal_ndim=1)
         fft2 = torch.fft(sketch_2, signal_ndim=1)
 
-        temp_rr, temp_ii = fft1_real.mul(fft2_real), fft1_imag.mul(fft2_imag)
-        fft_product_real = temp_rr - temp_ii
-        fft_product_imag = temp_rr + temp_ii
+        # Element-wise complex product
+        real1, imag1 = fft1.transpose(0, -1)
+        real2, imag2 = fft2.transpose(0, -1)
+        prod = torch.stack((real1 * real2 - imag1 * imag2,
+            real1 * imag2 + imag1 * real2), dim=0).transpose(0, -1)
 
-        cbp_flat = afft.Ifft()(fft_product_real, fft_product_imag)[0]
+        cbp_flat = torch.ifft(prod, signal_ndim=1)[..., 0]
 
         cbp = cbp_flat.view(batch_size, height, width, self.output_dim)
 
         if self.sum_pool:
             cbp = cbp.sum(dim=1).sum(dim=1)
-
+            
         return cbp
 
     @staticmethod
