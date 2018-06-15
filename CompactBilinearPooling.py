@@ -79,14 +79,20 @@ class CompactBilinearPooling(nn.Module):
 
         batch_size, _, height, width = bottom1.size()
 
+        # TODO: Check moving to GPU throughout this method
+
         bottom1_flat = bottom1.permute(0, 2, 3, 1).contiguous().view(-1, self.input_dim1)
         bottom2_flat = bottom2.permute(0, 2, 3, 1).contiguous().view(-1, self.input_dim2)
 
         sketch_1 = bottom1_flat.mm(self.sparse_sketch_matrix1)
         sketch_2 = bottom2_flat.mm(self.sparse_sketch_matrix2)
 
-        fft1_real, fft1_imag = afft.Fft()(sketch_1, Variable(torch.zeros(sketch_1.size())).cuda())
-        fft2_real, fft2_imag = afft.Fft()(sketch_2, Variable(torch.zeros(sketch_2.size())).cuda())
+        # Build real+imag arrays to compute FFT, with imag = 0
+        sketch_1 = torch.stack((sketch_1, torch.zeros(sketch_1.shape)), dim=-1)
+        sketch_2 = torch.stack((sketch_2, torch.zeros(sketch_2.shape)), dim=-1)
+
+        fft1 = torch.fft(sketch_1, signal_ndim=1)
+        fft2 = torch.fft(sketch_2, signal_ndim=1)
 
         temp_rr, temp_ii = fft1_real.mul(fft2_real), fft1_imag.mul(fft2_imag)
         fft_product_real = temp_rr - temp_ii
@@ -132,11 +138,11 @@ class CompactBilinearPooling(nn.Module):
 if __name__ == '__main__':
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-    bottom1 = torch.randn(128, 512, 14, 14).to(device)
-    bottom2 = torch.randn(128, 512, 14, 14).to(device)
+    bottom1 = torch.randn(64, 512, 14, 14).to(device)
+    bottom2 = torch.randn(64, 512, 14, 14).to(device)
 
     layer = CompactBilinearPooling(512, 512, 8000).to(device)
 
     layer.train()
 
-    #out = layer(bottom1, bottom2)
+    out = layer(bottom1, bottom2)
