@@ -135,11 +135,9 @@ class CompactBilinearPooling(nn.Module):
 if __name__ == '__main__':
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-    bottom1 = torch.randn(64, 512, 14, 14).to(device)
-    bottom2 = torch.randn(64, 512, 14, 14).to(device)
+    bottom1 = torch.randn(128, 512, 14, 14).to(device)
+    bottom2 = torch.randn(128, 512, 14, 14).to(device)
 
     layer = CompactBilinearPooling(512, 512, 8000).to(device)
-
-    layer.train()
 
     out = layer(bottom1, bottom2)
