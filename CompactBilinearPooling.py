@@ -41,7 +41,7 @@ class CompactBilinearPooling(nn.Module):
         self.input_dim2 = input_dim2
         self.output_dim = output_dim
         self.sum_pool = sum_pool
-        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        self.device = torch.device('cuda' if torch.cuda.is_available() and cuda else 'cpu')
 
         if rand_h_1 is None:
             torch.random.manual_seed(1)
@@ -76,10 +76,8 @@ class CompactBilinearPooling(nn.Module):
 
         batch_size, _, height, width = bottom1.size()
 
-        # TODO: Check moving to GPU throughout this method
-
-        bottom1_flat = bottom1.permute(0, 2, 3, 1).contiguous().view(-1, self.input_dim1)
-        bottom2_flat = bottom2.permute(0, 2, 3, 1).contiguous().view(-1, self.input_dim2)
+        bottom1_flat = bottom1.permute(0, 2, 3, 1).contiguous().view(-1, self.input_dim1).to(self.device)
+        bottom2_flat = bottom2.permute(0, 2, 3, 1).contiguous().view(-1, self.input_dim2).to(self.device)
 
         sketch_1 = bottom1_flat.mm(self.sparse_sketch_matrix1)
         sketch_2 = bottom2_flat.mm(self.sparse_sketch_matrix2)
@@ -103,7 +101,7 @@ class CompactBilinearPooling(nn.Module):
 
         if self.sum_pool:
             cbp = cbp.sum(dim=1).sum(dim=1)
-            
+
         return cbp
 
     @staticmethod
