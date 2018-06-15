@@ -88,12 +88,14 @@ class CompactBilinearPooling(nn.Module):
 
         fft1 = torch.fft(sketch_1, signal_ndim=1)
         fft2 = torch.fft(sketch_2, signal_ndim=1)
-
+        del sketch_1, sketch_2
+        
         # Element-wise complex product
         real1, imag1 = fft1.transpose(0, -1)
         real2, imag2 = fft2.transpose(0, -1)
         prod = torch.stack((real1 * real2 - imag1 * imag2,
             real1 * imag2 + imag1 * real2), dim=0).transpose(0, -1)
+        del real1, real2, imag1, imag2
 
         cbp_flat = torch.ifft(prod, signal_ndim=1)[..., 0]
 
