@@ -1,4 +1,3 @@
-import numpy as np
 import torch
 from torch import nn
 
@@ -89,7 +88,7 @@ class CompactBilinearPooling(nn.Module):
         fft1 = torch.fft(sketch_1, signal_ndim=1)
         fft2 = torch.fft(sketch_2, signal_ndim=1)
         del sketch_1, sketch_2
-        
+
         # Element-wise complex product
         real1, imag1 = fft1.transpose(0, -1)
         real2, imag2 = fft2.transpose(0, -1)
